@@ -29,6 +29,7 @@ struct data_t {
     u32 pid;
     u64 ts;
     char comm[TASK_COMM_LEN];
+    char path[256];
 };
 
 BPF_PERF_OUTPUT(events);
@@ -57,6 +58,25 @@ TRACEPOINT_PROBE(syscalls, sys_enter_write) {
     data.ts = bpf_ktime_get_ns();
     data.pid = tgid; 
     bpf_get_current_comm(&data.comm, sizeof(data.comm));
+
+    // Get file path
+    struct path file_path;
+    bpf_probe_read_kernel(&file_path, sizeof(file_path), &f->f_path);
+    
+    struct dentry *dentry;
+    bpf_probe_read_kernel(&dentry, sizeof(dentry), &file_path.dentry);
+    
+    if (dentry) {
+        struct qstr d_name;
+        bpf_probe_read_kernel(&d_name, sizeof(d_name), &dentry->d_name);
+        
+        // Read the filename (limited to prevent verifier issues)
+        int len = d_name.len;
+        if (len > sizeof(data.path) - 1) {
+            len = sizeof(data.path) - 1;
+        }
+        bpf_probe_read_kernel_str(&data.path, sizeof(data.path), d_name.name);
+    }
 
     events.perf_submit(args, &data, sizeof(data));
 

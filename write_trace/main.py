@@ -11,13 +11,13 @@ print(f"Loading BPF program from {bpf_program_path}")
 
 b = BPF(text=open(bpf_program_path).read())
 
-print("%-14s %-12s %-6s" % ("TIME(s)", "COMMAND", "PID"))
+print("%-14s %-12s %-6s %-40s" % ("TIME(s)", "COMMAND", "PID", "PATH"))
 
 def print_event(cpu, data, size):
     event = b["events"].event(data)
 
-    printb(b"%-14.3f %-12s %-6d" % ((event.ts/1000000000),
-           event.comm, event.pid))
+    printb(b"%-14.3f %-12s %-6d %-40s" % ((event.ts/1000000000),
+           event.comm, event.pid, event.path))
 
 b["events"].open_perf_buffer(print_event)
 while True:
