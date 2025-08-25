@@ -1,7 +1,7 @@
 [project]
 name = "ebpf-scrubber"
 version = "0.1.0"
-description = "Add your description here"
+description = "eBPF based file write monitoring tool"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
