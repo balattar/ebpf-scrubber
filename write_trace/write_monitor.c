@@ -27,8 +27,8 @@ struct data_t {
     u32 pid;
     u64 ts;
     u32 buf_len;
+    int fd;  // File descriptor for userspace path resolution
     char comm[TASK_COMM_LEN];
-    char path[256];
     char buf[128];  // Buffer content to inspect
 };
 
@@ -61,14 +61,8 @@ TRACEPOINT_PROBE(syscalls, sys_enter_write) {
         
     data->ts = bpf_ktime_get_ns();
     data->pid = tgid; 
+    data->fd = args->fd;  // Store file descriptor for userspace resolution
     bpf_get_current_comm(&data->comm, sizeof(data->comm));
-
-    // File path placeholder (real path extraction is complex)
-    data->path[0] = 't';
-    data->path[1] = 'e';
-    data->path[2] = 's';
-    data->path[3] = 't';
-    data->path[4] = '\0';
 
     // Capture write buffer content
     u32 count = (u32)args->count;
